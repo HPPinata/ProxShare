@@ -2,7 +2,7 @@
 
 set-PASS () {
   local passvar=1; local passvar2=2
-  while [[ "$passvar" != "$passvar2" ]]; do echo "SMB password previously unset or input inconsistent."; \
+  while [ "$passvar" != "$passvar2" ]; do echo "SMB password previously unset or input inconsistent."; \
     read -sp 'Password: ' passvar
     echo
     read -sp 'Confirm: ' passvar2
@@ -16,7 +16,6 @@ apt update && apt full-upgrade -y && apt autopurge -y
 apt install -y bcache-tools duperemove samba snapper
 
 systemctl enable smb
-systemctl enable nfs-server
 
 modprobe bcache
 echo 1 | tee /sys/fs/bcache/*/stop
@@ -26,17 +25,12 @@ sleep 1
 pass=$(ls /dev/sd*)
 wipefs -f -a ${pass[@]} /dev/nvme0n1
 
-bcache make -C /dev/nvme0n1
-bcache register /dev/nvme0n1
+make-bcache -C /dev/nvme0n1
+make-bcache -B ${pass[@]}
 sleep 1
 
-for blk in ${pass[@]}; do
-  bcache make -B $blk
-  bcache register $blk
-  sleep 1
-  bcache attach /dev/nvme0n1 $blk
-  bcache set-cachemode $blk writeback
-done
+bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
+echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 
 wipefs -f -a $(ls /dev/bcache*)
 mkfs.btrfs -f -L data -m raid1 -d raid1 /dev/bcache*
