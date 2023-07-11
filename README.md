@@ -3,9 +3,9 @@ This script creates a BtrFS-SR and SMB share with bcache on the Proxmox host Pro
 
 ## Usage:
 ```
-wget https://raw.githubusercontent.com/HPPinata/ProxShare/main/share.bash
-cat share.bash #look at the things you download
-bash share.bash
+wget https://raw.githubusercontent.com/HPPinata/ProxShare/main/createSHR.bash
+cat createSHR.bash #look at the things you download
+bash createSHR.bash
 ```
 
 The script asks for the smb password to use, but is currently hardcoded to format nvme0n1 and all sd* drives.
