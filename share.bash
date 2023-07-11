@@ -42,7 +42,7 @@ mount /dev/bcache0 /var/share/mnt
 
 btrfs subvolume create /var/share/mnt/vms
 btrfs subvolume create /var/share/mnt/vms/backup
-pvesm add btrfs mass-storage --path /var/share/mnt/vms
+pvesm add btrfs mass-storage --path /var/share/mnt/vms --content iso,vztmpl,images,rootdir
 
 btrfs subvolume create /var/share/mnt/net
 
