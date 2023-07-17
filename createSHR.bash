@@ -5,6 +5,17 @@ mkdir install-tmp
 mv createSHR.bash install-tmp
 cd install-tmp
 
+set-PASS () {
+  local passvar=1; local passvar2=2
+  while [ "$passvar" != "$passvar2" ]; do echo "SMB password previously unset or input inconsistent."; \
+    read -sp 'Password: ' passvar
+    echo
+    read -sp 'Confirm: ' passvar2
+    echo
+  done
+  smb_password="$(iconv -f ASCII -t UTF-16LE <(printf $passvar) | openssl dgst -md4 -provider legacy | awk -F '= ' {'print $2'})"
+}
+set-PASS
 
 create-TEMPLATE () {
   tpID=10001
@@ -24,18 +35,6 @@ create-TEMPLATE () {
   qm set $tpID --template 1
 }
 create-TEMPLATE
-
-set-PASS () {
-  local passvar=1; local passvar2=2
-  while [ "$passvar" != "$passvar2" ]; do echo "SMB password previously unset or input inconsistent."; \
-    read -sp 'Password: ' passvar
-    echo
-    read -sp 'Confirm: ' passvar2
-    echo
-  done
-  smb_password="$(iconv -f ASCII -t UTF-16LE <(printf $passvar) | openssl dgst -md4 -provider legacy | awk -F '= ' {'print $2'})"
-}
-set-PASS
 
 apt update && apt full-upgrade -y && apt autopurge -y
 apt install -y bcache-tools duperemove samba snapper
