@@ -37,27 +37,32 @@ create-TEMPLATE () {
 create-TEMPLATE
 
 apt update && apt full-upgrade -y && apt autopurge -y
-apt install -y duperemove samba snapper
+apt install -y bcache-tools duperemove samba snapper
 
 systemctl enable smb
+
+modprobe bcache
+echo 1 | tee /sys/fs/bcache/*/stop
+echo 1 | tee /sys/block/bcache*/bcache/stop
+sleep 1
 
 pass=$(ls /dev/sd*)
 wipefs -f -a ${pass[@]} /dev/nvme0n1
 
-pvcreate /dev/nvme0n1 ${pass[@]}
-vgcreate data /dev/nvme0n1 ${pass[@]}
+make-bcache -C /dev/nvme0n1
+make-bcache -B ${pass[@]}
+sleep 1
 
-lvcreate -n cache -l 100%PV data /dev/nvme0n1
-lvcreate -n main -l 96%FREE --type raid1 --raidintegrity y data ${pass[@]}
-lvconvert --type cache --cachevol cache data/main
+bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
+echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 
-wipefs -f -a /dev/data/main
-mkfs.btrfs -f -L data /dev/data/main
+wipefs -f -a $(find /dev/bcache* -maxdepth 0 -type b)
+mkfs.btrfs -f -L data -m raid1 -d raid1 $(find /dev/bcache* -maxdepth 0 -type b)
 
 mkdir -p /var/share/mnt
-mount /dev/data/main /var/share/mnt
+mount /dev/bcache0 /var/share/mnt
 
-{ echo; echo '/dev/data/main  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
+{ echo; echo '/dev/bcache0  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
 
 btrfs subvolume create /var/share/mnt/vms
 btrfs subvolume create /var/share/mnt/vms/backup
@@ -89,6 +94,7 @@ snapper -c data setup-quota
 { crontab -l 2>/dev/null
 cat <<'EOL'
 
+#@reboot echo 0 | tee /sys/block/bcache*/bcache/sequential_cutoff
 0 6 * * 1 duperemove -dhr -b 64K --dedupe-options=same --hash=xxhash --hashfile=/var/share/mnt/.duperemove/hashfile.db /var/share/mnt
 0 5 1 * * rm -rf /var/share/mnt/.duperemove/hashfile.db && btrfs filesystem defragment -r /var/share/mnt
 0 5 20 * * btrfs scrub start /var/share/mnt
