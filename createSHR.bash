@@ -44,8 +44,11 @@ systemctl enable smb
 pass=$(ls /dev/sd*)
 wipefs -f -a /dev/nvme0n1 ${pass[@]}
 
+truncate -s 1G /tmp/crypt.img
+integritysetup format -q /tmp/crypt.img
+
 for disk in /dev/nvme0n1 ${pass[@]}; do
-  integritysetup format -q $disk
+  dd if=/tmp/crypt.img of=$disk
   integritysetup open --allow-discards $disk $(basename $disk)
   echo "$(basename $disk) $disk - allow-discards" >> /etc/integritytab
   mapper+="/dev/mapper/$(basename $disk) "
