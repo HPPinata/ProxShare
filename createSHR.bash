@@ -42,14 +42,14 @@ apt install -y duperemove samba snapper
 systemctl enable smb
 
 pass=$(ls /dev/sd*)
-wipefs -f -a ${pass[@]} /dev/nvme0n1
+wipefs -f -a /dev/nvme0n1 ${pass[@]}
 
 pvcreate /dev/nvme0n1 ${pass[@]}
 vgcreate data /dev/nvme0n1 ${pass[@]}
 
 lvcreate -n cache -l 100%PV data /dev/nvme0n1
 lvcreate -n main -l 96%FREE --type raid1 --raidintegrity y data ${pass[@]}
-lvconvert --type cache --cachevol cache data/main
+#lvconvert --type cache --cachevol cache data/main
 
 wipefs -f -a /dev/data/main
 mkfs.btrfs -f -L data /dev/data/main
