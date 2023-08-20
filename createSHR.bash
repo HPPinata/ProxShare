@@ -54,7 +54,7 @@ make-bcache -B ${pass[@]}
 sleep 1
 
 bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
-echo writethrough | tee /sys/block/bcache*/bcache/cache_mode
+echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
 
 wipefs -f -a $(find /dev/bcache* -maxdepth 0 -type b)
