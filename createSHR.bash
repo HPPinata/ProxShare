@@ -65,6 +65,8 @@ mount /dev/bcache0 /var/share/mnt
 
 { echo; echo '/dev/bcache0  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
 
+fstrim -av
+
 btrfs subvolume create /var/share/mnt/vms
 btrfs subvolume create /var/share/mnt/vms/backup
 pvesm add btrfs mass-storage --path /var/share/mnt/vms --content iso,vztmpl,images,rootdir
