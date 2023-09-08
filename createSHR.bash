@@ -56,7 +56,7 @@ for (( i=1; i<=$n; i++ )) do lvcreate -n cache$i -l $(( $x / $n )) pool ${cache[
 c=1
 for i in $(lvs data | grep sd | awk -F ' ' {'print $1'}); do lvconvert -y --type cache --cachevol cache$c data/$i; let c++; done
 
-mkfs.btrfs -f -L data -m raid1 -d raid1 $(ls /dev/data)
+mkfs.btrfs -f -L data -m raid1 -d raid1 $(ls /dev/data/*)
 
 mkdir -p /var/share/mnt
 mount /dev/data/sda /var/share/mnt
