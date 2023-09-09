@@ -54,7 +54,7 @@ n=$(( $(lvs data | wc -l) - 1 ))
 for (( i=1; i<=$n; i++ )) do lvcreate -n cache$i -l $(( $x / $n )) pool ${cache[@]}; done
 
 c=1
-for i in $(lvs data | grep sd | awk -F ' ' {'print $1'}); do lvconvert -y --type cache --cachevol cache$c data/$i; let c++; done
+for i in $(lvs data | grep sd | awk -F ' ' {'print $1'}); do lvconvert -y --type cache --cachemode writeback --cachevol cache$c data/$i; let c++; done
 
 mkfs.btrfs -f -L data -m raid1 -d raid1 $(ls /dev/data/*)
 
