@@ -46,14 +46,20 @@ echo 1 | tee /sys/fs/bcache/*/stop
 echo 1 | tee /sys/block/bcache*/bcache/stop
 sleep 1
 
-pass=$(ls /dev/sd*)
-wipefs -f -a ${pass[@]} /dev/nvme0n1
+drive=$(ls /dev/sd*)
+cache=( /dev/nvme0n1 /dev/nvme1n1 )
+wipefs -f -a ${drive[@]} ${cache[@]}
 
-make-bcache -C /dev/nvme0n1
-make-bcache -B ${pass[@]}
+pvcreate -ff ${cache[@]}
+vgcreate cache ${cache[@]}
+lvcreate -n nvme -l 100%PV --type raid1 --wipesignatures y cache
+wipefs -f -a /dev/cache/nvme
+
+make-bcache -C /dev/cache/nvme
+make-bcache -B ${drive[@]}
 sleep 1
 
-bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
+bcache-super-show /dev/cache/nvme | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
 echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
 
