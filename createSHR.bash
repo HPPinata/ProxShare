@@ -35,6 +35,7 @@ create-TEMPLATE () {
   qm set $tpID --template 1
 }
 create-TEMPLATE
+cd .. && rm -rf install-tmp
 
 apt update && apt full-upgrade -y && apt autopurge -y
 apt install -y bcache-tools duperemove samba snapper
