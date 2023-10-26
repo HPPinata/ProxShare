@@ -47,21 +47,22 @@ cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
 pvcreate -ff ${cache[@]} ${drive[@]}
 vgcreate pool ${cache[@]} ${drive[@]}
-
 for i in ${drive[@]}; do lvcreate -n $(basename $i) -l 100%PV pool $i; done
-x=$(pvdisplay ${cache[@]} | grep "Free PE" | awk -F ' ' {'print $3'})
-n=$(( $(lvs data | wc -l) - 1 ))
+
+x=0
+for i in ${cache[@]}; do echo $((x = $x + $(pvdisplay $i | grep "Free PE" | awk -F ' ' {'print $3'}))); done
+n=$(( $(lvs pool | wc -l) - 1 ))
 for (( i=1; i<=$n; i++ )) do lvcreate -n cache$i -l $(( $x / $n )) pool ${cache[@]}; done
 
 c=1
-for i in $(lvs data | grep sd | awk -F ' ' {'print $1'}); do lvconvert -y --type cache --cachemode writeback --cachevol cache$c data/$i; let c++; done
+for i in $(lvs pool | grep sd | awk -F ' ' {'print $1'}); do lvconvert -y --type cache --chunksize 512 --cachemode writeback --cachevol cache$c pool/$i; let c++; done
 
-mkfs.btrfs -f -L data -m raid1 -d raid1 $(ls /dev/data/*)
+mkfs.btrfs -f -L data -m raid1 -d raid1 $(ls /dev/pool/*)
 
 mkdir -p /var/share/mnt
-mount /dev/data/sda /var/share/mnt
+mount /dev/pool/sda /var/share/mnt
 
-{ echo; echo '/dev/data/sda  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
+{ echo; echo '/dev/pool/sda  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
 fstrim -av
 
 btrfs subvolume create /var/share/mnt/vms
