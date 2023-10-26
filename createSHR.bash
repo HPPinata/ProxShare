@@ -44,7 +44,9 @@ systemctl enable smb
 drive=$(ls /dev/sd*)
 cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
-make-bcache -C ${cache[@]}
+for i in ${cache[@]}; do
+  make-bcache -C $i
+done
 make-bcache -B ${drive[@]}
 sleep 1
 
