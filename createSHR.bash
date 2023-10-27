@@ -38,30 +38,18 @@ create-TEMPLATE
 cd .. && rm -rf install-tmp
 
 apt update && apt full-upgrade -y && apt autopurge -y
-apt install -y bcache-tools duperemove samba snapper
+apt install -y duperemove samba snapper
 systemctl enable smb
 
 drive=$(ls /dev/sd*)
 cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
-pvcreate -ff ${cache[@]}
-vgcreate cache ${cache[@]}
-lvcreate -n nvme -l 100%PV --type raid1 --wipesignatures y cache
-
-make-bcache -C /dev/cache/nvme
-make-bcache -B ${drive[@]}
-sleep 1
-
-bcache-super-show /dev/cache/nvme | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
-echo writethrough | tee /sys/block/bcache*/bcache/cache_mode
-echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
-
-mkfs.btrfs -f -L data -m raid1 -d raid1 $(find /dev/bcache* -maxdepth 0 -type b)
+mkfs.btrfs -f -L data -m raid1 -d raid1 ${drive[@]}
 
 mkdir -p /var/share/mnt
-mount /dev/bcache0 /var/share/mnt
+mount /dev/sda /var/share/mnt
 
-{ echo; echo '/dev/bcache0  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
+{ echo; echo '/dev/sda  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
 fstrim -av
 
 btrfs subvolume create /var/share/mnt/vms
@@ -93,8 +81,6 @@ snapper -c data setup-quota
 { crontab -l 2>/dev/null
 cat <<'EOL'
 
-#@reboot echo 0 | tee /sys/block/bcache*/bcache/sequential_cutoff
-@reboot echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
 0 6 * * 1 duperemove -dhr --dedupe-options=same --hash=xxhash --hashfile=/var/share/mnt/.duperemove/hashfile.db /var/share/mnt
 0 5 1 * * rm -rf /var/share/mnt/.duperemove/hashfile.db && btrfs balance start -musage=50 -dusage=50 /var/share/mnt
 0 5 15 * * btrfs scrub start /var/share/mnt
