@@ -44,12 +44,16 @@ systemctl enable smb
 drive=$(ls /dev/sd*)
 cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
-mkfs.btrfs -f -L data -m raid1 -d raid1 ${drive[@]}
+pvcreate ${drive[@]}
+vgcreate pool ${drive[@]}
+lvcreate -n data -l 96%FREE --type raid1 pool ${pass[@]}
+
+mkfs.btrfs -f -L data /dev/pool/data
 
 mkdir -p /var/share/mnt
-mount /dev/sda /var/share/mnt
+mount /dev/pool/data /var/share/mnt
 
-{ echo; echo '/dev/sda  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
+{ echo; echo '/dev/pool/data  /var/share/mnt  btrfs  nofail  0  2'; } >> /etc/fstab
 fstrim -av
 
 btrfs subvolume create /var/share/mnt/vms
