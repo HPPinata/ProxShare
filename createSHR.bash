@@ -44,16 +44,15 @@ systemctl enable smb
 drive=$(ls /dev/sd*)
 cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
-pvcreate -ff ${cache[@]}
-vgcreate cache ${cache[@]}
-lvcreate -n nvme -l 100%PV --type raid1 --wipesignatures y cache
-
-make-bcache -C /dev/cache/nvme
+for i in ${cache[@]}; do
+  make-bcache -C $i
+done
 make-bcache -B ${drive[@]}
 sleep 1
 
-bcache-super-show /dev/cache/nvme | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache*/bcache/attach
-echo writethrough | tee /sys/block/bcache*/bcache/cache_mode
+bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache0/bcache/attach
+bcache-super-show /dev/nvme1n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache1/bcache/attach
+echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
 
 mkfs.btrfs -f -L data -m raid1 -d raid1 $(find /dev/bcache* -maxdepth 0 -type b)
