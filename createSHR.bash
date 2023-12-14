@@ -38,20 +38,25 @@ create-TEMPLATE
 cd .. && rm -rf install-tmp
 
 apt update && apt full-upgrade -y && apt autopurge -y
-apt install -y bcache-tools duperemove samba snapper
+apt install -y bcache-tools duperemove parted samba snapper
 systemctl enable smb
 
 drive=$(ls /dev/sd*)
 cache=( /dev/nvme0n1 /dev/nvme1n1 )
 
-for i in ${cache[@]}; do
-  make-bcache -C $i
+for i in ${cache[@]} ${drive[@]}; do
+  parted -s -a optimal $i 'mklabel gpt mkpart primary 0% 100%'
 done
-make-bcache -B ${drive[@]}
+
+for i in ${cache[@]}; do
+  make-bcache -C "$i"p1
+done
+for i in ${drive[@]}; do
+  make-bcache -B "$i"1
 sleep 1
 
-bcache-super-show /dev/nvme0n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache0/bcache/attach
-bcache-super-show /dev/nvme1n1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache1/bcache/attach
+bcache-super-show /dev/nvme0n1p1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache0/bcache/attach
+bcache-super-show /dev/nvme1n1p1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache1/bcache/attach
 echo writeback | tee /sys/block/bcache*/bcache/cache_mode
 echo 0 | tee /sys/block/bcache*/bcache/writeback_percent
 
