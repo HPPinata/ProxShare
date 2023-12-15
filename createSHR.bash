@@ -47,6 +47,7 @@ cache=( /dev/nvme0n1 /dev/nvme1n1 )
 for i in ${cache[@]} ${drive[@]}; do
   parted -s -a optimal $i 'mklabel gpt mkpart primary 0% 100%'
 done
+sleep 1
 
 for i in ${cache[@]}; do
   make-bcache -C "$i"p1
@@ -54,6 +55,7 @@ done
 for i in ${drive[@]}; do
   make-bcache -B "$i"1
 sleep 1
+done
 
 bcache-super-show /dev/nvme0n1p1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache0/bcache/attach
 bcache-super-show /dev/nvme1n1p1 | grep cset.uuid | awk -F ' ' {'print $2'} | tee /sys/block/bcache1/bcache/attach
