@@ -5,6 +5,9 @@ mkdir install-tmp
 mv createSHR.bash install-tmp
 cd install-tmp
 
+scp ceph:/etc/ceph/ceph.client.admin.keyring /root/rbd.keyring
+pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/rbd.keyring
+
 create-TEMPLATE () {
   tpID=10001
   vmNAME=microos
@@ -24,5 +27,3 @@ create-TEMPLATE () {
 }
 create-TEMPLATE
 cd .. && rm -rf install-tmp
-
-apt update && apt full-upgrade -y && apt autopurge -y
