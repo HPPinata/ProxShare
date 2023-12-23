@@ -6,6 +6,7 @@ mv createSHR.bash install-tmp
 cd install-tmp
 
 scp ceph:/etc/ceph/ceph.client.admin.keyring /root/rbd.keyring
+scp ceph:/etc/ceph/ceph.conf /etc/pve/priv/ceph/proxblock.conf
 pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/rbd.keyring
 
 create-TEMPLATE () {
