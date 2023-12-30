@@ -5,9 +5,14 @@ mkdir install-tmp
 mv createSHR.bash install-tmp
 cd install-tmp
 
-scp ceph:/etc/ceph/ceph.client.admin.keyring /root/rbd.keyring
-scp ceph:/etc/ceph/ceph.conf /etc/pve/priv/ceph/proxblock.conf
-pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/rbd.keyring
+scp ceph:/etc/ceph/ceph.client.admin.keyring /etc/ceph/ceph.client.admin.keyring
+cp /etc/ceph/ceph.client.admin.keyring /root/admin.keyring
+scp ceph:/etc/ceph/ceph.conf /etc/ceph/ceph.conf
+cp /etc/ceph/ceph.conf /etc/pve/priv/ceph/proxblock.conf
+
+pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/admin.keyring
+mkdir /mnt/cephfs
+mount -t ceph :/prox /mnt/cephfs -o name=admin,fs=cephfs
 
 create-TEMPLATE () {
   tpID=10001
