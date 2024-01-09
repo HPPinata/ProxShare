@@ -11,8 +11,10 @@ scp ceph:/etc/ceph/ceph.conf /etc/ceph/ceph.conf
 cp /etc/ceph/ceph.conf /etc/pve/priv/ceph/proxblock.conf
 
 pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/admin.keyring
+rados purge proxblock --yes-i-really-really-mean-it
 mkdir /mnt/cephfs
 mount -t ceph :/prox /mnt/cephfs -o name=admin,fs=cephfs
+rm -rf /mnt/cephfs/*
 
 create-TEMPLATE () {
   tpID=10001
