@@ -1,5 +1,5 @@
 # ProxShare
-This script creates a BtrFS-SR and SMB share with bcache on the Proxmox host Proxmox.
+This script creates a BtrFS-SR and SMB share with bcache on the Proxmox host.
 
 ## Usage:
 ```
