@@ -11,7 +11,8 @@ scp ceph:/etc/ceph/ceph.conf /etc/ceph/ceph.conf
 
 pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/admin.keyring
 mkdir /mnt/cephfs
-mount -t ceph :/prox /mnt/cephfs -o name=admin,fs=cephfs
+{ echo; echo ':/prox  /mnt/cephfs  ceph  name=admin,fs=cephfs  0  0'; } >> /etc/fstab
+mount -a
 rm -rf /mnt/cephfs/*
 
 create-TEMPLATE () {
