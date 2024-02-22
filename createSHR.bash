@@ -10,10 +10,11 @@ cp /etc/ceph/ceph.client.admin.keyring /root/admin.keyring
 scp ceph:/etc/ceph/ceph.conf /etc/ceph/ceph.conf
 
 pvesm add rbd proxblock --monhost "192.168.8.44" --pool proxblock --content images,rootdir --username admin --keyring /root/admin.keyring
-mkdir /mnt/cephfs
-{ echo; echo ':/prox  /mnt/cephfs  ceph  name=admin,fs=cephfs  0  0'; } >> /etc/fstab
+mkdir /mnt/cephfs/prox
+PROX="$(ceph fs subvolume getpath cephfs prox)"
+{ echo; echo ":$PROX  /mnt/cephfs/prox  ceph  name=admin,fs=cephfs  0  0"; } >> /etc/fstab
 mount -a
-rm -rf /mnt/cephfs/*
+rm -rf /mnt/cephfs/prox/*
 
 create-TEMPLATE () {
   tpID=10001
